@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,14 +10,13 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-#define PORT 8080
 #define BUFFER_SIZE 1024
 
 /**
  * @file Client.cpp
  * @brief Simple Windows chat client using Winsock and multithreading.
  *
- * Connects to a TCP server on localhost (port 8080), sends user input, and
+ * Connects to a TCP server (by default, on localhost port 8080), sends user input, and
  * receives messages from the server in a separate thread. Uses the Windows
  * Sockets API for networking and Windows threads for concurrent message
  * reception.
@@ -30,6 +30,7 @@
  * @date May 30, 2025
  */
 
+// Function to receive messages from the server in a separate thread
 DWORD WINAPI receive_messages(LPVOID socket_desc) 
 {
 	int sock = *(int*)socket_desc;
@@ -45,58 +46,59 @@ DWORD WINAPI receive_messages(LPVOID socket_desc)
 	return 0;
 }
 
-void InitializeClient() 
-{
-	WSADATA wsaData;
-	int sock = 0;
-	struct sockaddr_in serv_addr;
-	char buffer[BUFFER_SIZE];
+void InitializeClient(const std::string& serverAddress = "127.0.0.1", const unsigned int& serverPort = 8080)
+{  
+    WSADATA wsaData;  
+    int sock = 0;  
+    struct sockaddr_in serv_addr;  
+    char buffer[BUFFER_SIZE];  
 
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) 
-	{
-		printf("WSAStartup failed\n");
-		exit(EXIT_FAILURE);
-	}
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)  
+    {  
+        printf("WSAStartup failed\n");  
+        exit(EXIT_FAILURE);  
+    }  
 
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-	{
-		perror("Socket creation failed");
-		exit(EXIT_FAILURE);
-	}
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)  
+    {  
+        perror("Socket creation failed");  
+        exit(EXIT_FAILURE);  
+    }  
 
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_family = AF_INET;  
+    serv_addr.sin_port = htons(serverPort);
 
-	if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) 
-	{
-		perror("Invalid address");
-		exit(EXIT_FAILURE);
-	}
+    // Convert std::string to C-style string using c_str()  
+    if (inet_pton(AF_INET, serverAddress.c_str(), &serv_addr.sin_addr) <= 0)  
+    {  
+        perror("Invalid address");  
+        exit(EXIT_FAILURE);  
+    }  
+	// Connect to the server
+    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)  
+    {  
+        perror("Connection failed");  
+        exit(EXIT_FAILURE);  
+    }  
 
-	if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) 
-	{
-		perror("Connection failed");
-		exit(EXIT_FAILURE);
-	}
+    printf("Connected to server\n");  
+	// Create a thread to receive messages from the server
+    HANDLE thread_handle = CreateThread(  
+        NULL, 0, receive_messages, &sock, 0, NULL  
+    );  
+    if (thread_handle == NULL)  
+    {  
+        perror("Thread creation failed");  
+        exit(EXIT_FAILURE);  
+    }  
+	// Set the thread to run in the background
+    while (1)  
+    {  
+        printf("Enter message: ");  
+        fgets(buffer, BUFFER_SIZE, stdin);  
+        send(sock, buffer, strlen(buffer), 0);  
+    }  
 
-	printf("Connected to server\n");
-
-	HANDLE thread_handle = CreateThread(
-		NULL, 0, receive_messages, &sock, 0, NULL
-	);
-	if (thread_handle == NULL) 
-	{
-		perror("Thread creation failed");
-		exit(EXIT_FAILURE);
-	}
-
-	while (1) 
-	{
-		printf("Enter message: ");
-		fgets(buffer, BUFFER_SIZE, stdin);
-		send(sock, buffer, strlen(buffer), 0);
-	}
-
-	closesocket(sock);
-	WSACleanup();
+    closesocket(sock);  
+    WSACleanup();  
 }

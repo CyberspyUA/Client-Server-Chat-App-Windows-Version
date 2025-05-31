@@ -1,6 +1,4 @@
-
 #include <iostream>  
-
 
 /**  
  * @file main.cpp  
@@ -14,7 +12,7 @@
  */  
 
 void InitializeServer();  
-void InitializeClient();  
+void InitializeClient(const std::string& serverAddress, const unsigned int& serverPort);  
 
 int main()  
 {  
@@ -35,7 +33,14 @@ int main()
 	}  
 	else if (choice == 2)  
 	{  
-		InitializeClient();  
+		std::cout << "Input the server IP address: \n";
+		std::string serverAddress{};
+		std::cin >> serverAddress;
+		std::cout << "Input the server IP port: \n";
+		unsigned int serverPort = 0;
+		std::cin >> serverPort;
+		std::cout << "Starting in client mode..." << std::endl;
+		InitializeClient(serverAddress, serverPort);
 	}  
 	else  
 	{  

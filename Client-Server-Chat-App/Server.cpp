@@ -32,13 +32,13 @@
  */
 
 void InitializeServer() {
-	WSADATA wsaData;
-	int serverFD, newSocket, clientSockets[MAX_CLIENTS];
-	struct sockaddr_in address;
-	int opt = 1, maxSD, activity;
-	fd_set readfds;
-	char buffer[BUFFER_SIZE + 1] = { 0 };
-	int addrlen = sizeof(address);
+	WSADATA wsaData; // Winsock data structure
+	int serverFD, newSocket, clientSockets[MAX_CLIENTS]; // Array to hold client sockets
+	struct sockaddr_in address; // Structure to hold server address information
+	int opt = 1, maxSD, activity; // Variables for select() and activity checking
+	fd_set readfds; // File descriptor set for select()
+	char buffer[BUFFER_SIZE + 1] = { 0 }; // Buffer for incoming messages
+	int addrlen = sizeof(address); // Length of the address structure
 
 	// Initialize Winsock
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) 
@@ -46,16 +46,16 @@ void InitializeServer() {
 		printf("WSAStartup failed\n");
 		exit(EXIT_FAILURE);
 	}
-
+	// Initialize client sockets to 0
 	for (int clientIndex = 0; clientIndex < MAX_CLIENTS; clientIndex++) clientSockets[clientIndex] = 0;
-
+	// Create a socket for the server
 	if ((serverFD = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) 
 	{
 		printf("Socket creation failed: %d\n", WSAGetLastError());
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}
-
+	// Set socket options to allow reuse of the address
 	if (setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) 
 	{
 		printf("setsockopt failed: %d\n", WSAGetLastError());
@@ -67,7 +67,7 @@ void InitializeServer() {
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(PORT);
-
+	// Bind the socket to the specified port
 	if (bind(serverFD, (struct sockaddr*)&address, sizeof(address)) == SOCKET_ERROR) 
 	{
 		printf("Bind failed: %d\n", WSAGetLastError());
@@ -75,7 +75,7 @@ void InitializeServer() {
 		WSACleanup();
 		exit(EXIT_FAILURE);
 	}
-
+	// Start listening for incoming connections
 	if (listen(serverFD, 3) == SOCKET_ERROR) 
 	{
 		printf("Listen failed: %d\n", WSAGetLastError());
@@ -91,7 +91,7 @@ void InitializeServer() {
 		FD_ZERO(&readfds);
 		FD_SET(serverFD, &readfds);
 		maxSD = serverFD;
-
+		// Add client sockets to the set
 		for (int clientIndex = 0; clientIndex < MAX_CLIENTS; clientIndex++) 
 		{
 			if (clientSockets[clientIndex] > 0)
@@ -101,13 +101,13 @@ void InitializeServer() {
 		}
 
 		activity = select(0, &readfds, NULL, NULL, NULL); // 0 for nfds on Windows
-
+		// Check for errors in select
 		if (activity == SOCKET_ERROR) 
 		{
 			printf("Select error: %d\n", WSAGetLastError());
 			break;
 		}
-
+		// Check if there is an incoming connection on the server socket
 		if (FD_ISSET(serverFD, &readfds)) {
 			if ((newSocket = accept(serverFD, (struct sockaddr*)&address, &addrlen)) == INVALID_SOCKET) 
 			{
@@ -124,7 +124,7 @@ void InitializeServer() {
 				}
 			}
 		}
-
+		// Check for incoming messages from clients
 		for (int clientIndex = 0; clientIndex < MAX_CLIENTS; clientIndex++) 
 		{
 			SOCKET s = clientSockets[clientIndex];
