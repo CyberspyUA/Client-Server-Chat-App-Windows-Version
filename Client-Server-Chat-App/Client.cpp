@@ -117,10 +117,22 @@ void InitializeClient(const std::string& serverAddress = "127.0.0.1",
 			WSACleanup();
 			break;
 		}
+        if (strlen(buffer) == 0)
+        {
+			printf("Message cannot be empty. Please enter a message.\n");
+			continue;
+        }
+		//Check for overly long messages (after nickname is prepended)
+		std::string messageWithNickname = userNickname + ": " + buffer;
+		if (messageWithNickname.length() >= BUFFER_SIZE) 
+        {
+			printf("Message too long. Please limit your message to %zu characters.\n",
+			BUFFER_SIZE - userNickname.length() - 2); // 2 for ": "
+			continue;
+		}
 
 		// Prepend nickname to the message
-		std::string messageToSend = userNickname + ": " + buffer;
-		send(sock, messageToSend.c_str(), (int)messageToSend.length(), 0);
+		send(sock, messageWithNickname.c_str(), (int)messageWithNickname.length(), 0);
     }  
 
     closesocket(sock);  
