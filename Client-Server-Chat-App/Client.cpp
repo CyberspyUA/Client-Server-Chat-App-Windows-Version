@@ -96,7 +96,25 @@ void InitializeClient(const std::string& serverAddress = "127.0.0.1", const unsi
     {  
         printf("Enter message: ");  
         fgets(buffer, BUFFER_SIZE, stdin);  
-        send(sock, buffer, strlen(buffer), 0);  
+        send(sock, buffer, strlen(buffer), 0); 
+
+        // Remove trailing newline from fgets
+        buffer[strcspn(buffer, "\r\n")] = 0;
+
+        // Convert buffer to lowercase for case-insensitive comparison
+        char lower_buffer[BUFFER_SIZE];
+        strncpy_s(lower_buffer, buffer, BUFFER_SIZE);
+        lower_buffer[BUFFER_SIZE - 1] = '\0';
+        for (size_t i = 0; lower_buffer[i]; ++i) {
+            lower_buffer[i] = (char)tolower((unsigned char)lower_buffer[i]);
+        }
+
+        if (strcmp(lower_buffer, "/quit") == 0 || strcmp(lower_buffer, "/exit") == 0)
+        {
+            closesocket(sock);
+            WSACleanup();
+            break;
+        }
     }  
 
     closesocket(sock);  
