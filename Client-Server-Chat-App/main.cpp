@@ -1,5 +1,5 @@
 #include <iostream>  
-
+#include <string>
 /**  
  * @file main.cpp  
  * @brief Entry point for the chat application. Allows user to choose server or client mode.  
@@ -12,7 +12,9 @@
  */  
 
 void InitializeServer();  
-void InitializeClient(const std::string& serverAddress, const unsigned int& serverPort);  
+void InitializeClient(const std::string& serverAddress, 
+					  const unsigned int& serverPort, 
+					  const std::string& userNickname);
 
 int main()  
 {  
@@ -39,8 +41,20 @@ int main()
 		std::cout << "Input the server IP port: \n";
 		unsigned int serverPort = 0;
 		std::cin >> serverPort;
+		//Prompt for nickname
+		std::string userNickname;
+		std::cout << "Enter your nickname: ";
+        // Clear input buffer before reading nickname
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::getline(std::cin, userNickname);
+		if (userNickname.empty())
+		{
+			userNickname = "Anonymous"; // Default nickname if none provided
+			std::cout << "No nickname provided. Using default: " << userNickname << std::endl;
+		}
+
 		std::cout << "Starting in client mode..." << std::endl;
-		InitializeClient(serverAddress, serverPort);
+		InitializeClient(serverAddress, serverPort, userNickname);
 	}  
 	else  
 	{  
