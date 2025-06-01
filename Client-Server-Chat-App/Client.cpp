@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <iostream>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,9 @@ DWORD WINAPI receive_messages(LPVOID socket_desc)
 	return 0;
 }
 
-void InitializeClient(const std::string& serverAddress = "127.0.0.1", const unsigned int& serverPort = 8080)
+void InitializeClient(const std::string& serverAddress = "127.0.0.1", 
+                      const unsigned int& serverPort = 8080, 
+                      const std::string& userNickname = "Anonymous")
 {  
     WSADATA wsaData;  
     int sock = 0;  
@@ -94,27 +97,30 @@ void InitializeClient(const std::string& serverAddress = "127.0.0.1", const unsi
 	// Set the thread to run in the background
     while (1)  
     {  
-        printf("Enter message: ");  
-        fgets(buffer, BUFFER_SIZE, stdin);  
-        send(sock, buffer, strlen(buffer), 0); 
+		printf("Enter message: ");
+		fgets(buffer, BUFFER_SIZE, stdin);
 
-        // Remove trailing newline from fgets
-        buffer[strcspn(buffer, "\r\n")] = 0;
+		// Remove trailing newline from fgets
+		buffer[strcspn(buffer, "\r\n")] = 0;
 
-        // Convert buffer to lowercase for case-insensitive comparison
-        char lower_buffer[BUFFER_SIZE];
-        strncpy_s(lower_buffer, buffer, BUFFER_SIZE);
-        lower_buffer[BUFFER_SIZE - 1] = '\0';
-        for (size_t i = 0; lower_buffer[i]; ++i) {
-            lower_buffer[i] = (char)tolower((unsigned char)lower_buffer[i]);
-        }
+		// Convert buffer to lowercase for case-insensitive comparison
+		char lower_buffer[BUFFER_SIZE];
+		strncpy_s(lower_buffer, buffer, BUFFER_SIZE);
+		lower_buffer[BUFFER_SIZE - 1] = '\0';
+		for (size_t i = 0; lower_buffer[i]; ++i) {
+			lower_buffer[i] = (char)tolower((unsigned char)lower_buffer[i]);
+		}
+		// Check for exit commands. If the user types "/quit" or "/exit" in any case, close the socket and exit
+		if (strcmp(lower_buffer, "/quit") == 0 || strcmp(lower_buffer, "/exit") == 0)
+		{
+			closesocket(sock);
+			WSACleanup();
+			break;
+		}
 
-        if (strcmp(lower_buffer, "/quit") == 0 || strcmp(lower_buffer, "/exit") == 0)
-        {
-            closesocket(sock);
-            WSACleanup();
-            break;
-        }
+		// Prepend nickname to the message
+		std::string messageToSend = userNickname + ": " + buffer;
+		send(sock, messageToSend.c_str(), (int)messageToSend.length(), 0);
     }  
 
     closesocket(sock);  

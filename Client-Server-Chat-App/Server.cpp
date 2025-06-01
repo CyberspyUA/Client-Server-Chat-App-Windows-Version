@@ -138,7 +138,7 @@ void InitializeServer() {
 				}
 				else {
 					buffer[valueRead] = '\0';
-					printf("Client %d: %s\n", clientIndex, buffer);
+					printf("%s\n", buffer);
 					for (int i = 0; i < MAX_CLIENTS; i++) {
 						if (clientSockets[i] > 0 && i != clientIndex) {
 							send(clientSockets[i], buffer, valueRead, 0);
