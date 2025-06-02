@@ -11,6 +11,9 @@
 #include <atomic>
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include <iomanip> // Adding this include for std::put_time
+
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -80,6 +83,33 @@ void PrintError(const char* message)
     SetConsoleColor(COLOR_DEFAULT);
 }
 
+
+
+// Modify the LogMessage function to fix the issue
+void LogMessage(const std::string& message)
+{
+    std::ofstream logFile("client_log.txt", std::ios::app);
+    if (logFile.is_open())
+    {
+        // Get current time as system time
+        auto now = std::chrono::system_clock::now();
+
+        // Convert system time to time_t
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+        // Convert time_t to tm structure
+        std::tm localTime;
+        localtime_s(&localTime, &currentTime); // Use localtime_s for thread safety
+
+        // Log the message with timestamp
+        logFile << std::put_time(&localTime, "(%m/%d/%H:%M)") << " " << message << std::endl;
+        logFile.close();
+    }
+    else
+    {
+        PrintError("Failed to open log file.\n");
+    }
+}
 /**
  * @brief Function to receive messages from the server in a separate thread.
  * 
@@ -256,6 +286,9 @@ reconnect_label:
         int sendResult = send(sock,
                               messageWithNickname.c_str(),
                               (int)messageWithNickname.length(), 0);
+
+		LogMessage(messageWithNickname); // Log the message with timestamp
+
         if (sendResult == SOCKET_ERROR)
         {
             PrintError("Send failed. Attempting to reconnect...\n");
