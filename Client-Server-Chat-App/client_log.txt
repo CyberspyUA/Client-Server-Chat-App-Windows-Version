@@ -3,3 +3,9 @@
 (06/02/22:10) Nick: I am fine.
 (06/02/22:10) Nick: Thank you for the invitation
 (06/02/22:10) Nick: Bye!
+(06/03/17:18) Jeff: Hello, my name is Jeff. How are you doing?
+(06/03/17:18) Jeff: I have to go. Bye!
+(06/03/17:19) Valerya: Hello there!
+(06/03/17:19) Valerya: Hello world.
+(06/03/17:20) Valerya: Valeriya is here.
+(06/03/17:20) Valerya: Chao-kakao.
