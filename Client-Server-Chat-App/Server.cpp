@@ -10,6 +10,9 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <thread>
+#include <map>
+#include <mutex>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -34,7 +37,7 @@
  *
  * @author Nikita Struk
  * @date May 30, 2025
- * Last updated: June 1, 2025
+ * Last updated: June 3, 2025
  */
 
 void LogMessage(const char* message) 
@@ -62,6 +65,60 @@ void LogMessage(const char* message)
 	}
 }
 
+// Helper to trim whitespace
+
+std::string trim(const std::string& s) {
+
+	size_t start = s.find_first_not_of(" \t\r\n");
+
+	size_t end = s.find_last_not_of(" \t\r\n");
+
+	return (start == std::string::npos) ? "" : s.substr(start, end - start + 1);
+
+}
+
+
+
+void ServerConsoleThread(std::map<std::string, int>& nameToSocket, int clientSockets[], std::mutex& mapMutex) {
+
+	while (true) {
+
+		std::string input;
+
+		std::getline(std::cin, input);
+
+		input = trim(input);
+
+		if (input.rfind("/kick ", 0) == 0) 
+		{
+			std::string clientName = trim(input.substr(6));
+			std::lock_guard<std::mutex> lock(mapMutex);
+			auto it = nameToSocket.find(clientName);
+			if (it != nameToSocket.end()) 
+			{
+				int sock = it->second;
+				send(sock, "You have been kicked by the server.", 35, 0);
+				closesocket(sock);
+				// Remove from clientSockets array
+				for (int i = 0; i < MAX_CLIENTS; ++i) 
+				{
+					if (clientSockets[i] == sock) 
+					{
+						clientSockets[i] = 0;
+						break;
+					}
+				}
+				nameToSocket.erase(it);
+				printf("Client '%s' has been kicked.\n", clientName.c_str());
+			}
+			else 
+			{
+				printf("No client with nickname '%s' found.\n", clientName.c_str());
+			}
+		}
+	}
+}
+
 void InitializeServer() {
 	WSADATA wsaData; // Winsock data structure
 	int serverFD, newSocket, clientSockets[MAX_CLIENTS]; // Array to hold client sockets
@@ -71,12 +128,18 @@ void InitializeServer() {
 	char buffer[BUFFER_SIZE + 1] = { 0 }; // Buffer for incoming messages
 	int addrlen = sizeof(address); // Length of the address structure
 
-	// Initialize Winsock
+	// Map nickname to socket
+	std::map<std::string, int> nameToSocket;
+	std::mutex mapMutex;
+	// Start server console thread for /kick command
+	std::thread consoleThread(ServerConsoleThread, std::ref(nameToSocket), clientSockets, std::ref(mapMutex));
+	consoleThread.detach();
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) 
 	{
 		printf("WSAStartup failed\n");
 		exit(EXIT_FAILURE);
 	}
+
 	// Initialize client sockets to 0
 	for (int clientIndex = 0; clientIndex < MAX_CLIENTS; clientIndex++) clientSockets[clientIndex] = 0;
 	// Create a socket for the server
@@ -172,6 +235,16 @@ void InitializeServer() {
 				{
 					buffer[valueRead] = '\0';
 					printf("%s\n", buffer);
+					LogMessage(buffer);
+					// Extract nickname (format: "nickname: message")
+					std::string msg(buffer);
+					size_t sep = msg.find(": ");
+					if (sep != std::string::npos) 
+					{
+						std::string nickname = msg.substr(0, sep);
+						std::lock_guard<std::mutex> lock(mapMutex);
+						nameToSocket[nickname] = s;
+					}
 					for (int i = 0; i < MAX_CLIENTS; i++) 
 					{
 						if (clientSockets[i] > 0 && i != clientIndex) 
