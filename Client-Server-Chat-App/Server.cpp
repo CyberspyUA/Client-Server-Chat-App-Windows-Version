@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <chrono>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -26,11 +30,37 @@
  * - Accepts multiple client connections using select() for multiplexing.
  * - Broadcasts received messages to all connected clients except the sender.
  * - Cleans up resources and handles errors gracefully.
+ * - Logs messages to a file with timestamps.
  *
  * @author Nikita Struk
  * @date May 30, 2025
  * Last updated: June 1, 2025
  */
+
+void LogMessage(const char* message) 
+{
+	std::ofstream logFile("server.log", std::ios::app);
+	if (logFile.is_open()) 
+	{
+		// Get current time as system time
+		auto now = std::chrono::system_clock::now();
+
+		// Convert system time to time_t
+		std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+		// Convert time_t to tm structure
+		std::tm localTime;
+		localtime_s(&localTime, &currentTime); // Use localtime_s for thread safety
+
+		// Log the message with timestamp
+		logFile << std::put_time(&localTime, "(%m/%d/%H:%M)") << " " << message << std::endl;
+		logFile.close();
+	} 
+	else 
+	{
+		printf("Could not open log file.\n");
+	}
+}
 
 void InitializeServer() {
 	WSADATA wsaData; // Winsock data structure
@@ -131,18 +161,23 @@ void InitializeServer() {
 			SOCKET s = clientSockets[clientIndex];
 			if (s > 0 && FD_ISSET(s, &readfds)) {
 				int valueRead = recv(s, buffer, BUFFER_SIZE, 0);
-				if (valueRead <= 0) {
+				if (valueRead <= 0) 
+				{
 					getpeername(s, (struct sockaddr*)&address, &addrlen);
 					printf("Client disconnected, socket fd is %d, client index is %d\n", s, clientIndex);
 					closesocket(s);
 					clientSockets[clientIndex] = 0;
 				}
-				else {
+				else 
+				{
 					buffer[valueRead] = '\0';
 					printf("%s\n", buffer);
-					for (int i = 0; i < MAX_CLIENTS; i++) {
-						if (clientSockets[i] > 0 && i != clientIndex) {
+					for (int i = 0; i < MAX_CLIENTS; i++) 
+					{
+						if (clientSockets[i] > 0 && i != clientIndex) 
+						{
 							send(clientSockets[i], buffer, valueRead, 0);
+							LogMessage(buffer); // Log the message to server.log
 						}
 					}
 				}

@@ -5,7 +5,8 @@
  * @brief Entry point for the chat application. Allows user to choose server or client mode.  
  *  
  * Prompts the user to select whether to run as a server or a client, then calls  
- * the appropriate initialization function.  
+ * the appropriate initialization function.
+ * 
  *  
  * @author Nikita Struk  
  * @date May 30, 2025  
