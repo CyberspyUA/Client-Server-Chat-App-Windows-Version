@@ -1,4 +1,23 @@
 ﻿#pragma once
+/**
+ * @file Client.cpp
+ * @brief Simple Windows chat client using Winsock and multithreading.
+ *
+ * Connects to a TCP server (by default, on localhost port 8080), sends user input, and
+ * receives messages from the server in a separate thread. Uses the Windows
+ * Sockets API for networking and Windows threads for concurrent message
+ * reception.
+ *
+ * Features:
+ * - Establishes a connection to the server.
+ * - Sends user-typed messages to the server.
+ * - Receives and displays messages from the server asynchronously.
+ * - Attempts to reconnect if the connection is lost.
+ * - Uses colored text for system, user, and error messages.
+ * @author Nikita Struk
+ * @date May 30, 2025
+ * Last updated: June 2, 2025
+ */
 
 #include <iostream>
 #include <string>
@@ -29,25 +48,25 @@
 #define COLOR_USER 10
 #define COLOR_ERROR 12
 
-/**
- * @file Client.cpp
- * @brief Simple Windows chat client using Winsock and multithreading.
- *
- * Connects to a TCP server (by default, on localhost port 8080), sends user input, and
- * receives messages from the server in a separate thread. Uses the Windows
- * Sockets API for networking and Windows threads for concurrent message
- * reception.
- *
- * Features:
- * - Establishes a connection to the server.
- * - Sends user-typed messages to the server.
- * - Receives and displays messages from the server asynchronously.
- * - Attempts to reconnect if the connection is lost.
- * - Uses colored text for system, user, and error messages.
- * @author Nikita Struk
- * @date May 30, 2025
- * Last updated: June 2, 2025
- */
+
+
+//User-customizable color variables
+WORD g_colorDefault = COLOR_DEFAULT;
+WORD g_colorSystem = COLOR_SYSTEM;
+WORD g_colorUser = COLOR_USER;
+WORD g_colorError = COLOR_ERROR;
+
+void PrintSystem(const char* message);
+
+// Helper function to print available color codes
+void PrintColorHelp()
+{
+	PrintSystem("Available color codes (foreground):\n");
+	printf("0: Black\n1: Blue\n2: Green\n3: Aqua\n4: Red\n5: Purple\n6: Yellow\n7: White\n8: Gray");
+	printf("\n9: Light Blue\n10: Light Green\n11: Light Aqua\n12: Light Red\n13: Light Purple\n14: Light Yellow\n15: Bright White\n");
+	PrintSystem("Usage: /color <type> <code>\n");
+	PrintSystem("Types: system, user, error, default\n");
+}
 
  // Shared flag to signal disconnection
 std::atomic<bool> isDisconnected(false);
@@ -62,28 +81,66 @@ void SetConsoleColor(WORD color)
 //Print system/info message in cyan color
 void PrintSystem(const char* message)
 {
-    SetConsoleColor(COLOR_SYSTEM);
+    SetConsoleColor(g_colorSystem);
     printf("%s", message);
-    SetConsoleColor(COLOR_DEFAULT);
+    SetConsoleColor(g_colorDefault);
 }
 
 //Print user message in green color
 void PrintUser(const char* message)
 {
-    SetConsoleColor(COLOR_USER);
+    SetConsoleColor(g_colorUser);
     printf("%s", message);
-	SetConsoleColor(COLOR_DEFAULT);
+	SetConsoleColor(g_colorDefault);
 }
 
 // Print error message in red color
 void PrintError(const char* message)
 {
-    SetConsoleColor(COLOR_ERROR);
+    SetConsoleColor(g_colorError);
     printf("%s", message);
-    SetConsoleColor(COLOR_DEFAULT);
+    SetConsoleColor(g_colorDefault);
 }
 
+void HandleColorCommand(const char* buffer)
+{
+	// Format: /color <type> <code>
+	char type[16];
+	int code;
+	// FIX: Pass buffer size for %s argument as required by sscanf_s
+	int matched = sscanf_s(buffer, "/color %15s %d", type, (unsigned)_countof(type), &code);
 
+	if (matched != 2 || code < 0 || code > 15)
+	{
+		PrintColorHelp();
+		return;
+	}
+
+	if (strcmp(type, "system") == 0)
+	{
+		g_colorSystem = (WORD)code;
+		PrintSystem("System message color updated.\n");
+	}
+	else if (strcmp(type, "user") == 0)
+	{
+		g_colorUser = (WORD)code;
+		PrintSystem("User message color updated.\n");
+	}
+	else if (strcmp(type, "error") == 0)
+	{
+		g_colorError = (WORD)code;
+		PrintSystem("Error message color updated.\n");
+	}
+	else if (strcmp(type, "default") == 0)
+	{
+		g_colorDefault = (WORD)code;
+		PrintSystem("Default color updated.\n");
+	}
+	else
+	{
+		PrintColorHelp();
+	}
+}
 
 // Modify the LogMessage function to fix the issue
 void LogMessage(const std::string& message)
@@ -215,11 +272,11 @@ reconnect_label:
     while (!ConnectToServer(sock, serverAddress, serverPort) && connectionAttempts < 3)
     {
 		PrintError("Connection failed. Retrying...\n");
-        SetConsoleColor(COLOR_SYSTEM);
+        SetConsoleColor(g_colorSystem);
         printf("%d", RECONNECT_DELAY_SECONDS);
-        SetConsoleColor(COLOR_ERROR);
+        SetConsoleColor(g_colorError);
 		printf(" seconds...\n");
-        SetConsoleColor(COLOR_DEFAULT);
+        SetConsoleColor(g_colorDefault);
         std::this_thread::sleep_for(std::chrono::seconds(RECONNECT_DELAY_SECONDS));
 		connectionAttempts++;
         if (connectionAttempts >= 3)
@@ -246,6 +303,20 @@ reconnect_label:
 		fgets(buffer, BUFFER_SIZE, stdin);
         //Remove trailing newline from gets
 		buffer[strcspn(buffer, "\n")] = 0;
+		// Handle /color command locally
+		if (strncmp(buffer, "/color", 6) == 0)
+		{
+			if (strcmp(buffer, "/color help") == 0 || strcmp(buffer, "/color") == 0) {
+				PrintColorHelp();
+			}
+			else
+			{
+				HandleColorCommand(buffer);
+			}
+			// Clear buffer to avoid accidental send
+			memset(buffer, 0, BUFFER_SIZE);
+			continue;
+		}
 		//Convert buffer to lowercase for case-insensitive comparison
 		char lower_buffer[BUFFER_SIZE];
 		strncpy_s(lower_buffer, buffer, BUFFER_SIZE);

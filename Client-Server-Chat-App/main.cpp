@@ -1,17 +1,19 @@
+/**
+ * @file main.cpp
+ * @brief Entry point for the chat application. Allows user to choose server or client mode.
+ *
+ * Prompts the user to select whether to run as a server or a client, then calls
+ * the appropriate initialization function.
+ *
+ *
+ * @author Nikita Struk
+ * @date May 30, 2025
+ * Last updated: June 1, 2025
+ */
 #include <iostream>  
 #include <string>
-/**  
- * @file main.cpp  
- * @brief Entry point for the chat application. Allows user to choose server or client mode.  
- *  
- * Prompts the user to select whether to run as a server or a client, then calls  
- * the appropriate initialization function.
- * 
- *  
- * @author Nikita Struk  
- * @date May 30, 2025  
- * Last updated: June 1, 2025
- */  
+
+
 
 void InitializeServer();  
 void InitializeClient(const std::string& serverAddress, 
