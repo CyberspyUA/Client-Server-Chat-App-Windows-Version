@@ -1,4 +1,22 @@
-
+/**
+ * @file Server.cpp
+ * @brief Multi-client chat server using Windows Sockets API.
+ *
+ * This server listens for incoming TCP connections on a specified port (8080).
+ * It accepts up to MAX_CLIENTS simultaneous clients, relays messages between them,
+ * and handles client disconnections. The implementation uses the Winsock2 API
+ * and is intended for Windows platforms only.
+ *
+ * Key features:
+ * - Accepts multiple client connections using select() for multiplexing.
+ * - Broadcasts received messages to all connected clients except the sender.
+ * - Cleans up resources and handles errors gracefully.
+ * - Logs messages to a file with timestamps.
+ *
+ * @author Nikita Struk
+ * @date May 30, 2025
+ * Last updated: June 3, 2025
+ */
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -20,25 +38,7 @@
 #define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024
 
-/**
- * @file Server.cpp
- * @brief Multi-client chat server using Windows Sockets API.
- *
- * This server listens for incoming TCP connections on a specified port (8080).
- * It accepts up to MAX_CLIENTS simultaneous clients, relays messages between them,
- * and handles client disconnections. The implementation uses the Winsock2 API
- * and is intended for Windows platforms only.
- *
- * Key features:
- * - Accepts multiple client connections using select() for multiplexing.
- * - Broadcasts received messages to all connected clients except the sender.
- * - Cleans up resources and handles errors gracefully.
- * - Logs messages to a file with timestamps.
- *
- * @author Nikita Struk
- * @date May 30, 2025
- * Last updated: June 3, 2025
- */
+
 
 void LogMessage(const char* message) 
 {
