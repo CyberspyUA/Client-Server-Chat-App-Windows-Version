@@ -252,19 +252,19 @@ bool ConnectToServer(int& sock, const std::string& serverAddress, unsigned int s
     return true;
 }
 
-void InitializeClient(const std::string& serverAddress = "127.0.0.1", 
-                      const unsigned int& serverPort = 8080, 
-                      const std::string& userNickname = "Anonymous")
+void InitializeClient(const std::string& serverAddress, 
+                      const unsigned int& serverPort, 
+                      std::string userNickname)
 {  
-    WSADATA wsaData;  
-    int sock = 0;  
-    struct sockaddr_in serv_addr;  
-    char buffer[BUFFER_SIZE];  
+    WSADATA wsaData;
+    int sock = 0;
+    struct sockaddr_in serv_addr;
+    char buffer[BUFFER_SIZE];
 
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)  
-    {  
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
         PrintError("WSAStartup failed\n");
-        exit(EXIT_FAILURE);  
+        exit(EXIT_FAILURE);
     }
 
 reconnect_label:
@@ -320,6 +320,47 @@ reconnect_label:
 			memset(buffer, 0, BUFFER_SIZE);
 			continue;
 		}
+		// Handle /nick command
+        if (strncmp(buffer, "/nick", 5) == 0)
+        {
+			std::string newNickname = buffer + 5; // Skip "/nick "
+			// Trim whitespace from the new nickname
+            newNickname.erase(0, newNickname.find_first_not_of(" \t\r\n"));
+			newNickname.erase(newNickname.find_last_not_of(" \t\r\n") + 1);
+            if(newNickname.empty())
+            {
+                PrintError("Nickname cannot be empty. Please enter a valid nickname.\n");
+				continue;
+            }
+            if (newNickname.length() > 32)
+            {
+                PrintError("Nickname too long (max 32 characters). \n");
+				continue;
+            }
+            std::string oldNickname = userNickname;
+			userNickname = newNickname; // Update the nickname
+			//Inform the server about the nickname change
+            std::string sysMsg = oldNickname + " changed nickname to " + userNickname;
+			int sendResult = send(sock, sysMsg.c_str(), (int)sysMsg.length(), 0);
+            LogMessage("[NICK] " + sysMsg);
+            if (sendResult == SOCKET_ERROR)
+            {
+                // Fix: Ensure `userNickname` is a mutable variable and matches the type of `newNickname`.  
+                // Update the declaration of `userNickname` to be a `std::string` if it isn't already.  
+
+                std::string userNickname; // Ensure this is declared as a std::string  
+
+                // Modify the assignment to ensure compatibility.  
+                userNickname = newNickname; // Update the nickname
+				PrintError("Failed to send nickname change to server. Attempting to reconnect.\n");
+                isDisconnected = true;
+                break;
+            }
+			PrintSystem("Nickname updated\n");
+            continue;
+        }
+
+
 		//Convert buffer to lowercase for case-insensitive comparison
 		char lower_buffer[BUFFER_SIZE];
 		strncpy_s(lower_buffer, buffer, BUFFER_SIZE);
