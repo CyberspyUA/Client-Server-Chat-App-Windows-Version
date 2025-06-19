@@ -16,7 +16,7 @@
  * - Uses colored text for system, user, and error messages.
  * @author Nikita Struk
  * @date May 30, 2025
- * Last updated: June 2, 2025
+ * Last updated: June 19, 2025
  */
 
 #include <iostream>
@@ -32,6 +32,7 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip> // Adding this include for std::put_time
+
 
 
 #pragma comment(lib, "ws2_32.lib")
@@ -194,7 +195,9 @@ DWORD WINAPI receive_messages(LPVOID socket_desc)
         }
 
 		buffer[valread] = '\0';
-		
+
+		MessageBeep(MB_ICONEXCLAMATION); // Beep to notify user of new message)
+
         // Print user messages in green, system messages in cyan
 		// Heuristic: if message contains ":", it's a user message, else system
         if (strstr(buffer, ": ") == buffer + 0)
