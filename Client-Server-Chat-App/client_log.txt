@@ -29,3 +29,31 @@
 (06/19/11:54) John: Connection just got revoked.
 (06/19/11:54) Jim: Glad to heear you.
 (06/19/11:54) Jim: /help
+(06/19/12:39) Jim: /nickname Johnatan
+(06/19/12:39) Jim: Hi
+(06/19/12:40) Jim: /nick Johnatan
+(06/19/12:40) Jim: Hi
+(06/19/12:40) Jim: /nick Jimmy
+(06/19/12:40) Jim: sd
+(06/19/12:40) Jim: awe
+(06/19/12:47) Jim: Hello
+(06/19/12:47) Jim: /nick Jimmy
+(06/19/12:47) Jim: 3
+(06/19/12:47) Jim: 2
+(06/19/12:47) Jim: 1
+(06/19/12:48) Jim: Hello
+(06/19/12:48) Jim: /nick Jimmy
+(06/19/12:48) Jim: Hello
+(06/19/12:48) Jim: 3
+(06/19/12:48) Jim: 2
+(06/19/12:48) Jim: 1
+(06/19/12:53) Jim: Hello
+(06/19/12:53) [NICK] Jim changed nickname to Jimmy
+(06/19/12:53) Jimmy: Hi there
+(06/19/12:54) Jim: Hello
+(06/19/12:54) Nick: Hi
+(06/19/12:54) [NICK] Jim changed nickname to Jimmy
+(06/19/12:54) Jimmy: Greetings
+(06/19/12:54) Nick: Hello
+(06/19/12:55) [NICK] Nick changed nickname to Nickolas
+(06/19/12:55) Nickolas: Now, I change nick to my full name.

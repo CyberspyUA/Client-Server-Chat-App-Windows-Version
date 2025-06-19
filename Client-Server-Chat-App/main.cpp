@@ -18,7 +18,7 @@
 void InitializeServer();  
 void InitializeClient(const std::string& serverAddress, 
 					  const unsigned int& serverPort, 
-					  const std::string& userNickname);
+					  mutable std::string userNickname);
 
 int main()  
 {  
