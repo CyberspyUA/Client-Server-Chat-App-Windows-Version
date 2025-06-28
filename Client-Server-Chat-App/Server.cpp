@@ -234,14 +234,69 @@ void InitializeServer() {
 				else 
 				{
 					buffer[valueRead] = '\0';
+
 					printf("%s\n", buffer);
 					LogMessage(buffer);
 					// Extract nickname (format: "nickname: message")
 					std::string msg(buffer);
 					size_t sep = msg.find(": ");
+
+					// Detect if the message is exactly "/users"
+					if (msg == "/users") {
+						std::lock_guard<std::mutex> lock(mapMutex);
+						std::string userList = "Connected users:";
+						if (nameToSocket.empty()) {
+							userList += " (none)";
+						}
+						else {
+							for (const auto& pair : nameToSocket) {
+								userList += "\n- " + pair.first;
+							}
+						}
+						send(s, userList.c_str(), (int)userList.length(), 0);
+						continue; // Do not broadcast this command
+					}
+
 					if (sep != std::string::npos) 
 					{
 						std::string nickname = msg.substr(0, sep);
+						std::string content = msg.substr(sep + 2);
+
+						//Detect nickname change pattern: "<oldNickname> changed to <newNickname>"
+						std::string nickChangePrefix = " changed to ";
+						size_t nickChangePos = content.find(nickChangePrefix);
+						if (nickChangePos == 0)
+						{
+							std::string newNickname = content.substr(nickChangePrefix.length());
+							newNickname = trim(newNickname);
+							std::lock_guard <std::mutex> lock(mapMutex);
+							//Check if the new nickname is already taken
+							if(nameToSocket.find(newNickname) != nameToSocket.end()) 
+							{
+								std::string errorMsg = "Nickname '" + newNickname + "' is already taken.";
+								send(s, errorMsg.c_str(), (int)errorMsg.length(), 0);
+								continue; // Skip further processing for this message
+							}
+							else
+							{
+								// Update the nickname in the map
+								nameToSocket.erase(nickname);
+								nameToSocket[newNickname] = s;
+
+								//Broadcast the nickname change to all clients
+								std::string announceMsg = nickname + " changed nickname to " + newNickname;
+								for (int i = 0; i < MAX_CLIENTS; i++) 
+								{
+									if (clientSockets[i] > 0) 
+									{
+										send(clientSockets[i], announceMsg.c_str(), (int)announceMsg.length(), 0);
+									}
+								}
+								LogMessage(announceMsg.c_str());
+							}
+							continue; // Skip normal message broadcast
+						}
+
 						std::lock_guard<std::mutex> lock(mapMutex);
 						nameToSocket[nickname] = s;
 					}
