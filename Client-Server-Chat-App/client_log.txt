@@ -57,3 +57,16 @@
 (06/19/12:54) Nick: Hello
 (06/19/12:55) [NICK] Nick changed nickname to Nickolas
 (06/19/12:55) Nickolas: Now, I change nick to my full name.
+(06/19/13:33) Jim: 1
+(06/19/13:33) Jim: 2
+(06/19/13:33) [NICK] Jim changed nickname to Jim
+(06/19/13:33) Jim: 2
+(06/19/13:33) Jim: 2
+(06/19/13:33) Jim: 3
+(06/19/13:33) Jim: 3
+(06/19/13:33) Jim: 3
+(06/19/13:33) Jim: 3
+(06/28/21:39) Kill: Hi.
+(06/28/21:41) kim: Hi
+(06/28/21:44) Kim: Hi
+(06/28/21:44) Holland: Hi

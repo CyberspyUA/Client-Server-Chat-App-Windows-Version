@@ -320,6 +320,20 @@ reconnect_label:
 			memset(buffer, 0, BUFFER_SIZE);
 			continue;
 		}
+        //Handle /users command: send to server, display response
+        if (strcmp(buffer, "/users") == 0)
+        {
+			int sendResult = send(sock, "/users", (int)strlen(buffer), 0);
+            if (sendResult == SOCKET_ERROR)
+            {
+                PrintError("Failed to request user list. Attempting to reconnect...\n");
+                isDisconnected = true;
+                break;
+            }
+			//The server should respond with the user list, which will be displayed by receive_messages thread.
+            continue;
+
+        }
 		// Handle /nick command
         if (strncmp(buffer, "/nick", 5) == 0)
         {
